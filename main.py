@@ -6,36 +6,40 @@ db = sql.connect(
     database="student_management")
 cur=db.cursor()
 
-for j in range(5):
-    cur.execute('SHOW tables;')
-    res = cur.fetchall()
-    myres=[]
-    for i in res:
-        myres+=[i[0]]
-    if 'students' not in myres:
-        sql="""CREATE TABLE Students (
-        student_id INT PRIMARY KEY,
-        first_name VARCHAR(50),
-        last_name VARCHAR(50),
-        phone VARCHAR(20)
-        );"""
-        cur.execute(sql)
-    elif 'attendance' not in myres:
-        sql="""CREATE TABLE Attendance (
-        attendance_id INT PRIMARY KEY,
-        student_id INT,
-        date DATE,
-        status VARCHAR(10)
-        );
-        """
-        cur.execute(sql)
+cur.execute('SHOW tables;')
+res = cur.fetchall()
+myres=[]
+for i in res:
+    myres+=[i[0]]
+if 'students' not in myres:
+    sql="""CREATE TABLE Students (
+    student_id INT PRIMARY KEY,
+    first_name VARCHAR(50),
+    last_name VARCHAR(50),
+    phone VARCHAR(20),
+    email VARCHAR(40),
+    fees int
+    );"""
+    cur.execute(sql)
+    print("'Students' table created!")
+if 'attendance' not in myres:
+    sql="""CREATE TABLE Attendance (
+    attendance_id INT PRIMARY KEY,
+    student_id INT,
+    date DATE,
+    status VARCHAR(10)
+    );
+    """
+    cur.execute(sql)
+    print("'Attendance' table created!")
+
 def manage_student():
     print(f"""
- _____________________________________________________
++-----------------------------------------------------+
 |                                                     |
 |                >  Manage Student  <                 |
 |                                                     | 
-|-----------------------------------------------------|
++-----------------------------------------------------+
 |                                                     |
 |                        MENU                         |
 |                        -  -                         |
@@ -46,7 +50,7 @@ def manage_student():
 |               [5] - List Students                   |
 |               [0] - Main Menu                       |
 |                                                     |
- ‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾
++-----------------------------------------------------+
 
 ↓ Enter your choice and press Enter""")
     c=int(input(""))
@@ -56,8 +60,10 @@ def manage_student():
         f_na=input("Enter First Name: ")
         l_na=input("Enter Last Name: ")
         s_p=input("Enter Phone Number: ")
-        data=(s_id,f_na,l_na,s_p)
-        sql="INSERT INTO Students VALUES (%s,%s,%s,%s)"
+        s_e=input("Enter E-Mail: ")
+        s_f=int(input("Enter Fees: "))
+        data=(s_id,f_na,l_na,s_p,s_e,s_f)
+        sql="INSERT INTO Students VALUES (%s,%s,%s,%s,%s,%s)"
         cur.execute(sql, data)
         db.commit()
         print("-------[    ✅ Student Added     ]-------")
@@ -70,13 +76,45 @@ def manage_student():
         print("-------[   ✅ Student Deleted     ]-------")
     elif c==3:
         print("-------[    Updating a Student    ]-------")
-        s_id=int(input("Enter Student ID: "))
-        f_na=input("Enter First Name: ")
-        l_na=input("Enter Last Name: ")
-        s_p=input("Enter Phone Number: ")
-        v=(f_na,l_na,s_p,s_id)
-        sql="UPDATE Students SET First_Name = %s, Last_Name = %s, Phone = %s WHERE Student_ID=%s"
-        cur.execute(sql,v)
+        s_id=int(input("   >> Enter Student ID: "))
+        s_id_t=(s_id,)
+        chk="SELECT * FROM Students WHERE Student_id=%s"
+        cur.execute(chk,s_id_t)
+        res=cur.fetchall()
+        print("\nSTUDENT ID\tFIRST NAME\tLAST NAME\tPHONE")
+        for i in res:
+            for j in i:
+                print(j,end="\t\t")
+            print()
+
+        print("""
+    >> What do you want to update?
+    [1] First Name
+    [2] Last Name
+    [3] Phone Number
+    [4] Email
+    [5] Fees
+    
+    ↓ Enter your choice and press Enter""")
+        mde=int(input("    "))
+        col=""
+        val=""
+        if mde==1:
+            col="first_name"
+            val="'"+input("    Enter new First Name: ")+"'"
+        elif mde==2:
+            col="last_name"
+            val="'"+input("    Enter new Last Name: ")+"'"
+        elif mde==3:
+            col="phone"
+            val="'"+input("    Enter new Phone Number: ")+"'"
+        elif mde==4:
+            val="'"+input("    Enter new E-Mail: ")+"'"
+        elif mde==5:
+            col="fees"
+            val=input("    Enter new Fees: ")
+        sql="UPDATE Students SET {0}={1} WHERE student_id={2}".format(col,val,s_id)
+        cur.execute(sql)
         db.commit()
         print("-------[    ✅ Student Updated    ]-------")
     elif c==4:
@@ -105,11 +143,11 @@ def manage_student():
     manage_student()
 def manage_attendance():
     print(f"""
- _____________________________________________________
++-----------------------------------------------------+
 |                                                     |
 |               >  Manage Attendance  <               |
 |                                                     | 
-|-----------------------------------------------------|
++-----------------------------------------------------+
 |                                                     |
 |                        MENU                         |
 |                        -  -                         |
@@ -118,7 +156,7 @@ def manage_attendance():
 |               [3] - List all Records                |
 |               [0] - Main Menu                       |
 |                                                     |
- ‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾
++-----------------------------------------------------+
 
 ↓ Enter your choice and press Enter""")
     c=int(input(""))
@@ -176,12 +214,12 @@ def manage_attendance():
     manage_attendance()
 def main():
     print("""
- _____________________________________________________
++-----------------------------------------------------+
 |                                                     |
 |               > Student Management <                |
 |                      System                         |
 |                                                     |
-|-----------------------------------------------------|
++-----------------------------------------------------+
 |                                                     |
 |                     MAIN MENU                       |
 |                      -  -  -                        |
@@ -189,7 +227,7 @@ def main():
 |               [2] - Manage Attendance               |
 |               [0] - Exit                            |
 |                                                     |
- ‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾
++-----------------------------------------------------+
 
 ↓ Enter your choice and press Enter""")
     c=int(input(""))
